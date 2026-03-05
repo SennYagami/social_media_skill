@@ -1,16 +1,16 @@
 ---
 name: social-media-skill
-description: 基于 Obsidian 的多平台内容生成与发布技能。当前支持小红书与 X（AI撰写推文、Gemini 配图、发布）。
+description: 基于 Obsidian 的多平台内容生成与发布技能（小红书、X）。
 ---
 
 # social_media_skill
 
-本技能用于以 Obsidian Vault 为内容源，按平台规则生成素材并执行发布。
+本技能用于以 Obsidian Vault 为内容源，按各平台规则完成内容创作、素材组织、草稿审阅与发布。
 
 ## 使用场景
 
-- 用户在 Obsidian 中写好 `note.md`，需要生成并发布小红书内容。
-- 用户需要为 X 生成平台风格推文（由 AI 直接撰写）、生成配图并发布。
+- 用户在 Obsidian 中写好 `note.md`，需要生成平台内容并发布。
+- 用户需要按不同平台规范生成文字与素材，并进行草稿审阅。
 
 ## 结构约定
 
@@ -21,60 +21,24 @@ description: 基于 Obsidian 的多平台内容生成与发布技能。当前支
     image/
     video/
   xiaohongshu/
-    post.md
-    render.md
-    images/
-    publish.json
+    ... (平台私有文件)
   X/
-    post.md
-    publish.json
-    assets/
-      image/
-      video/
+    ... (平台私有文件)
 ```
 
 资产管理约定：
-- 每个平台都使用 `assets/` 管理媒体素材。
-- `assets/` 下固定包含 `image/` 与 `video/`。
-- 可在 `image/` 或 `video/` 下继续细分目录（如 `generated/`, `cover/`, `campaign_2026/`）。
+- `<item>/assets/` 是跨平台可复用的公用资产目录。
+- 每个平台目录（如 `xiaohongshu/`、`X/`）必须管理自己的平台私有产物与私有资产，不与其他平台混用。
+- 公用资产与平台私有资产都建议采用 `image/`、`video/` 的子目录结构，并允许继续细分。
 
 ## 执行方式（平台直连）
 
-不使用统一 CLI；AI 按平台规则文档直接执行对应平台脚本。
+不使用统一 CLI；AI 应按平台规则文档执行对应流程与操作。
 
 ## 平台规则
 
-每个平台规则在 `reference/platform/<platform>/index.md` 中定义：
-- 内容生成规则
-- 渲染/素材规则
-- 发布约束
-
-## 小红书能力
-
-- 基于 `note.md` 生成 `post.md`（标题 + 正文 + tags）
-- 生成 `render.md`（YAML 头 + Markdown）
-- 调用 `reference/platform/xiaohongshu/scripts/render_xhs_v2.js` 渲染图片
-- 调用 `reference/platform/xiaohongshu/scripts/publish_xhs.py` 发布
-
-## X 能力
-
-- AI 直接根据 `note.md` 生成 X 推文文案与记录文件（`X/post.md` / `X/publish.json`）
-- 调用通用图片脚本 `reference/utils/gemini_image.js` 生成配图并存入 `X/assets/image/...`
-- 调用 `reference/platform/X/scripts/publish_x_post.js` 执行单条推文发布（文字+图片）
-
-## X 工作流
-
-1. 读取 `note.md`，生成 X 风格推文（含 hashtag 规则）。
-2. 如需配图，调用 `reference/utils/gemini_image.js` 生成指定风格图片，保存到 `X/assets/image/...`。
-3. 根据你的发布指令执行发布脚本，读取 `X/publish.json` 与资产路径发布到 X。
-
-## Gemini 图片脚本调用约定
-
-- 图片脚本：`reference/utils/gemini_image.js`
-- 当前仅支持图片模型：`gemini-2.5-flash-image`
-- 查询支持模型：
-  - `node reference/utils/gemini_image.js --list-models`
-- 查询风格：
-  - `node reference/utils/gemini_image.js --list-styles`
-- 生成图片示例：
-  - `node reference/utils/gemini_image.js --prompt "tweet visual concept" --style shinkai --output <item>/X/assets/image/generated/gemini_shinkai_001.png`
+每个平台规则在 `reference/platform/<platform>/index.md` 中定义。  
+AI 在执行具体平台任务前，必须先读取对应平台的 `index.md`，并严格遵循其中的：
+- 内容创作流程
+- 草稿与资产组织规范
+- 发布前校验与发布步骤

@@ -1,52 +1,51 @@
 # 小红书平台规则（Post -> Draft -> 指定 Draft 发布）
 
-本文件是小红书平台规则入口。所有产物必须存放在 `item_path`（用户 `note.md` 所在目录）下。
+本文件是小红书平台执行规范。AI 执行时必须按本文件流程运行，且所有产物必须落在 `item_path`（用户 `note.md` 所在目录）内。
 
 ---
 
-## item_path 定义
+## 1. 作用域与路径
 
-`item_path` 指向单条内容目录（包含 `note.md`）。
-
-示例：
-- `/workspace/mock_obsidian/0001_item2`
-- `./mock_obsidian/0001_item2`
+- `item_path`：单条内容目录，必须包含 `note.md`。
+- 示例：`/workspace/mock_obsidian/0001_item2`
+- 禁止把该条内容的文件写到其他 item 目录。
 
 ---
 
-## 标准目录结构
+## 2. 目录规范（强制）
 
 ```text
 <item_path>/
   note.md
   xiaohongshu/
-    post.md                      # 文案稿（先生成，供用户修改）
+    post.md
     draft/
       0001/
-        final.md                 # 完整审阅稿（文字+图片+标签）
-        publish.json             # 该 draft 的发布参数
+        render.md
+        final.md
+        publish.json
         assets/
           image/
-            cover.png
-            card_1.png
-            card_2.png
-            ...
           video/
+      0002/
+      ...
 ```
 
-说明：
-- `draft/` 下每个草稿都是独立文件夹。
-- 草稿名按创建顺序使用数字：`0001`, `0002`, `0003` ...
-- 用户可以反复创建新 draft（新素材、新排版）。
-- 强制要求（MUST）：每个 `draft/NNNN/final.md` 必须是完整审阅稿，必须包含该草稿发布所需的全部资料（文字、图片、视频〔如有〕、标签）。
+规则：
+- `post.md`：文案阶段文件（先产出，供用户修改确认）。
+- `draft/NNNN/`：一次完整草稿产物（可并存多个）。
+- `NNNN`：4 位递增数字（`0001`、`0002` ...）。
+- 每个 draft 必须自洽，不能依赖其他 draft 的私有素材。
 
 ---
 
-## 工作流（必须按顺序）
+## 3. 执行流程（必须按阶段）
 
-### 1. 先生成文案稿（post）
+### 阶段 A：生成文案稿（只生成文字）
 
-先生成 `xiaohongshu/post.md`，只做文字内容，不做最终素材。
+输入：`note.md`
+
+输出：`xiaohongshu/post.md`
 
 建议格式：
 
@@ -61,26 +60,81 @@
 #标签A #标签B #标签C
 ```
 
-### 2. 用户修改并确认 post.md
+要求：
+- 只做文案，不生成最终发布素材。
+- 标题、正文、标签结构必须清晰。
 
-- 用户直接编辑 `post.md`
-- 只有用户确认后，才能进入 Draft 生成
+### 阶段 B：用户审阅 post.md
 
-### 3. 进入 Draft 生成模式
+- 用户可修改 `post.md`。
+- 未确认前，不进入 Draft 生成。
 
-创建新的 `draft/NNNN/`，生成：
-1. `draft/NNNN/assets/image/*`（真实图片素材）
-2. `draft/NNNN/final.md`（结构化审阅稿）
-3. `draft/NNNN/publish.json`（发布所需字段）
+### 阶段 C：生成 Draft（完整审阅稿 + 素材）
 
-`final.md` 必须包含：
-- 标题
-- 正文
-- 全部图片（Markdown 插图）
-- 标签
-- （如有）视频素材路径
+触发条件：用户已确认 `post.md`。
 
-示例：
+创建新目录：`xiaohongshu/draft/NNNN/`，并生成以下文件：
+- `render.md`：用于渲染卡片。
+- `assets/image/*`：渲染后图片。
+- `final.md`：完整审阅稿。
+- `publish.json`：发布参数。
+
+`final.md` 强制要求（MUST）：
+- 必须包含该 draft 的全部发布资料：标题、正文、标签、图片、视频（如有）。
+- 图片必须用 Markdown 引用该 draft 内路径。
+- 必须是“可审阅、可复核、可追溯”的单一入口文件。
+
+`render.md` 强制要求（MUST）：
+- 包含 YAML 头：`emoji`、`title`、`subtitle`。
+- 正文按分页策略组织（见第 4 节）。
+
+### 阶段 D：发布指定 Draft
+
+- 发布时必须显式指定 draft（例如 `0001`）。
+- 发布输入只允许来自目标 `draft/NNNN/`：
+  - `publish.json`
+  - `assets/image/*`（以及视频，如有）
+- 禁止混用其他 draft 的资产。
+
+---
+
+## 4. 分页策略（渲染稳定性）
+
+优先级：手动分段优先，自动切分兜底。
+
+1. 手动分段（推荐）
+- 在 `render.md` 用 `---` 按逻辑章节分卡。
+- 每段建议 150-250 字，尽量语义完整。
+
+2. 自动切分（兜底）
+- 当段落不可控时，允许渲染脚本按高度自动切分。
+- 需接受可能出现的语义截断风险。
+
+建议：
+- 关键结论、步骤、对比内容优先手动分卡。
+- 长列表或超长段落避免放在同一卡片。
+
+---
+
+## 5. 文件内容模板（最小约束）
+
+### 5.1 render.md 示例
+
+```md
+---
+emoji: "💡"
+title: "主标题"
+subtitle: "副标题"
+---
+
+第一页内容...
+
+---
+
+第二页内容...
+```
+
+### 5.2 final.md 示例
 
 ```md
 # 标题
@@ -92,44 +146,65 @@
 # 图片
 ![cover](./assets/image/cover.png)
 ![card_1](./assets/image/card_1.png)
-![card_2](./assets/image/card_2.png)
+
+# 视频
+- ./assets/video/demo.mp4
 
 # Tags
 #标签A #标签B #标签C
 ```
 
-### 4. 发布时必须指定 draft
+### 5.3 publish.json 示例
 
-发布目标不是 `xiaohongshu/` 根目录，而是具体 `draft/NNNN/`。
-
-发布输入应来自：
-- `draft/NNNN/publish.json`
-- `draft/NNNN/assets/image/*`
-
----
-
-## 文案规则
-
-- 标题 <= 20 字
-- 正文短段落，适度 Emoji
-- 标签建议 5-10 个
-- 风格贴近小红书：具体、可执行、有经验总结
+```json
+{
+  "title": "标题",
+  "desc": "正文",
+  "images": [
+    "./assets/image/cover.png",
+    "./assets/image/card_1.png"
+  ],
+  "videos": []
+}
+```
 
 ---
 
-## 发布前检查清单
+## 6. 脚本调用（执行层）
 
-1. `post.md` 已用户确认
-2. 已创建目标 `draft/NNNN/`
-3. `final.md` 与 `publish.json` 一致，且 `final.md` 已覆盖该 draft 全部资料（文字/图片/视频）
-4. `publish.json` 图片路径指向当前 draft 的 `assets/image`
-5. `.env` 中 `XHS_COOKIE` 有效
+1. 渲染图片（示例）
+
+```bash
+node reference/platform/xiaohongshu/scripts/render_xhs_v2.js <item_path>/xiaohongshu/draft/0001/render.md -o <item_path>/xiaohongshu/draft/0001/assets/image --style xiaohongshu
+```
+
+2. 发布（示例）
+
+```bash
+python3 reference/platform/xiaohongshu/scripts/publish_xhs.py --title "标题" --desc "正文" --images <item_path>/xiaohongshu/draft/0001/assets/image/cover.png <item_path>/xiaohongshu/draft/0001/assets/image/card_1.png
+```
+
+说明：
+- 实际执行前先核对 `final.md` 与 `publish.json`。
+- `XHS_COOKIE` 必须有效。
 
 ---
 
-## 常见失败排查
+## 7. 发布前检查清单
 
-- 草稿发布错乱：确认你指定的 draft 是否正确（`0001` vs `0002`）
-- 图片缺失：检查 `draft/NNNN/assets/image/` 文件是否存在
-- 发布失败：优先检查 `XHS_COOKIE` 是否过期
-- 内容不满意：不要覆盖旧 draft，直接新建下一个 draft
+1. `post.md` 已经用户确认。
+2. 已创建本次目标 `draft/NNNN/`。
+3. `final.md` 已包含全部资料（文字、图片、视频如有）。
+4. `publish.json` 中引用路径均指向当前 draft。
+5. 所需环境变量已配置且未过期。
+
+---
+
+## 8. 失败处理
+
+- 发布失败优先检查 Cookie 过期。
+- 图片缺失优先检查 `assets/image/` 产物是否存在。
+- 草稿不满意时新建下一 draft，不覆盖历史 draft。
+
+---
+
