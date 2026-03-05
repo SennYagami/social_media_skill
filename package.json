@@ -1,0 +1,30 @@
+{
+  "name": "social-media-skill",
+  "version": "2.1.0",
+  "description": "Obsidian 多平台内容生成与发布技能（小红书 + X）",
+  "main": "reference/platform/xiaohongshu/scripts/render_xhs_v2.js",
+  "scripts": {
+    "render:xhs": "node reference/platform/xiaohongshu/scripts/render_xhs_v2.js",
+    "image:gemini": "node reference/utils/gemini_image.js",
+    "publish:x": "node reference/platform/X/scripts/publish_x_post.js",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "keywords": [
+    "social-media",
+    "xiaohongshu",
+    "x",
+    "twitter",
+    "gemini",
+    "image-generation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "^0.14.1",
+    "dotenv": "^16.4.7",
+    "js-yaml": "^4.1.0",
+    "marked": "^11.0.0",
+    "playwright": "^1.58.0",
+    "twitter-api-v2": "^1.17.2"
+  }
+}
